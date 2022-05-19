@@ -3,7 +3,7 @@
 #include "devices/intq.h"
 #include "devices/serial.h"
 
-/* Stores keys from the keyboard and serial port. */
+/* Stores keys from the keyboard and serial port.. */
 static struct intq buffer;
 
 /* Initializes the input buffer. */
