@@ -65,8 +65,7 @@ static void print_stats (void);
 int main (void) NO_RETURN;
 
 /* Pintos main program. */
-int
-main (void) {
+int main (void) {
 	uint64_t mem_end;
 	char **argv;
 
@@ -92,7 +91,7 @@ main (void) {
 	gdt_init ();
 #endif
 
-	/* Initialize interrupt handlers. */
+	/* 초기화 */
 	intr_init ();
 	timer_init ();
 	kbd_init ();
@@ -101,7 +100,7 @@ main (void) {
 	exception_init ();
 	syscall_init ();
 #endif
-	/* Start thread scheduler and enable interrupts. */
+	/*시작 함수*/
 	thread_start ();
 	serial_init_queue ();
 	timer_calibrate ();
@@ -121,7 +120,7 @@ main (void) {
 	/* Run actions specified on kernel command line. */
 	run_actions (argv);
 
-	/* Finish up. */
+	/* 종료 */
 	if (power_off_when_done)
 		power_off ();
 	thread_exit ();

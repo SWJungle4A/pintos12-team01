@@ -94,6 +94,12 @@ struct thread {
 
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
+	int64_t wakeup; //일어날 시간
+	int original_priority; //donation 이후 우선순위를 초기화하기 위해 초기우선순위 값 저장
+	struct list donations; //multiple donation을 고려하기 위해 사용
+	struct lock *wait_on_lock; //해당 스레드가 대기하고 있는 lock자료구조의 주소를 저장
+	struct list_elem donation_elem; //multiple donation을 고려하기 위해 사용
+
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
@@ -140,7 +146,17 @@ int thread_get_nice (void);
 void thread_set_nice (int);
 int thread_get_recent_cpu (void);
 int thread_get_load_avg (void);
-
 void do_iret (struct intr_frame *tf);
-
+/* 구현할 함수 선언*/
+void thread_sleep(int64_t ticks); //실행 중인 스레드를 슬립으로 만듬
+void thread_awake(int64_t ticks); //슬립큐에서 깨워야할 스레드를 깨움
+void update_next_to_awake(int64_t ticks);// 최소 틱을 가진 스레드 저장
+int64_t get_next_tick_to_awake(void); // thread.c의 next_tick_to_awake반환
+void test_max_priority(void);
+bool cmp_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+/* project 2-3 */
+void donate_priority(void);
+void remove_with_lock(struct lock *lock);
+void refresh_priority(void);
+bool cmp_donate_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
 #endif /* threads/thread.h */
