@@ -201,7 +201,20 @@ lock_acquire (struct lock *lock) {
 	ASSERT (lock != NULL);
 	ASSERT (!intr_context ());
 	ASSERT (!lock_held_by_current_thread (lock));
+	// lock의 holder가 존재한다면 
+	if (lock->holder){
+		// 현재 스레드의 wait_on_lock 변수에 획득하기를 기다리는 lock의 주소를 저장
+		struct thread *cur = thread_current();
+		cur->wait_on_lock = lock;
+		/* multiple donation을 고려하기 위해 이전 상태의 우선순위를 기억, donation을 받은
+		 thread의 thread 구조체를 list로 관리한다.*/
+		list_push_back(&lock->holder->donations, &cur->donation_elem);
+		/* Priority donation 수행하기 위해 donate_priority() 함수 호출 */
+		donate_priority();
+	}
 
+	/* multiple donation을 고려하기 위해 이전 상태의 우선순위를 기억, 
+		donation을 받은 스레드의 thread 구조체를 list로 관리한다.*/
 	sema_down (&lock->semaphore);
 	lock->holder = thread_current ();
 }
@@ -236,6 +249,10 @@ lock_release (struct lock *lock) {
 	ASSERT (lock != NULL);
 	ASSERT (lock_held_by_current_thread (lock));
 
+	/*project 2-3*/
+	remove_with_lock(lock);
+	refresh_priority();
+	/**************/
 	lock->holder = NULL;
 	sema_up (&lock->semaphore);
 }
@@ -249,7 +266,6 @@ lock_held_by_current_thread (const struct lock *lock) {
 
 	return lock->holder == thread_current ();
 }
-
 
 /* Initializes condition variable COND.  A condition variable
    allows one piece of code to signal a condition and cooperating
