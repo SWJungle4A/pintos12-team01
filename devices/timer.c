@@ -7,7 +7,7 @@
 #include "threads/io.h"
 #include "threads/synch.h"
 #include "threads/thread.h"
-
+#include "threads/fixed.h"
 /* See [8254] for hardware details of the 8254 timer chip. */
 
 #if TIMER_FREQ < 19
@@ -128,6 +128,16 @@ static void
 timer_interrupt (struct intr_frame *args UNUSED) {
 	ticks++;
 	thread_tick ();
+	if (thread_mlfqs){
+		mlfqs_increment_recent_cpu();
+		if(ticks%4==0){
+			mlfqs_recalculate_priority();
+			if(ticks%TIMER_FREQ==0){ 
+				mlfqs_recalculate_recent_cpu();
+				mlfqs_calculate_load_avg();
+			}
+		}
+	}
 	thread_awake(ticks); //ticks가 증가할때마다 awake작업 수행하기
 }
 

@@ -1,6 +1,5 @@
 #ifndef THREADS_THREAD_H
 #define THREADS_THREAD_H
-
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
@@ -27,7 +26,9 @@ typedef int tid_t;
 #define PRI_MIN 0                       /* Lowest priority. */
 #define PRI_DEFAULT 31                  /* Default priority. */
 #define PRI_MAX 63                      /* Highest priority. */
-
+#define NICE_DEFAULT 0
+#define RECENT_CPU_DEFAULT 0
+#define LOAD_AVG_DEFAULT 0
 /* A kernel thread or user process.
  *
  * Each thread structure is stored in its own 4 kB page.  The
@@ -99,7 +100,8 @@ struct thread {
 	struct list donations; //multiple donation을 고려하기 위해 사용
 	struct lock *wait_on_lock; //해당 스레드가 대기하고 있는 lock자료구조의 주소를 저장
 	struct list_elem donation_elem; //multiple donation을 고려하기 위해 사용
-
+	int nice;
+	int recent_cpu;
 
 #ifdef USERPROG
 	/* Owned by userprog/process.c. */
@@ -159,4 +161,10 @@ void donate_priority(void);
 void remove_with_lock(struct lock *lock);
 void refresh_priority(void);
 bool cmp_donate_priority(const struct list_elem *a, const struct list_elem *b, void *aux);
+void mlfqs_recalculate_recent_cpu(void);
+void mlfqs_increment_recent_cpu(void);
+void mlfqs_calculate_load_avg(void);
+void mlfqs_calculate_recent_cpu(struct thread *t);
+void mlfqs_calculate_priority(struct thread *t);
+void mlfqs_recalculate_priority(void);
 #endif /* threads/thread.h */
