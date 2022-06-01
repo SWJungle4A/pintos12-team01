@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/interrupt.h"
+#include "threads/synch.h" // 변경사항 
 #ifdef VM
 #include "vm/vm.h"
 #endif
@@ -94,12 +95,15 @@ struct thread {
 	/* Shared between thread.c and synch.c. */
 	struct list_elem elem;              /* List element. */
 	struct list_elem all_elem;          /* List element for all_list */ // mlfqs 관련 변경
+	int64_t wakeup_tick;                /* Local ticks (minimum ticks required before awakened )  */ /* alarm-multiple 관련 변경 */
 
-	
+	/* donation */
 	int init_priority;                  /* default priority (to initialize after return donated priority) */ // priority-donate 관련 변경
 	struct lock *wait_on_lock;          /* Address of lock that this thread is waiting for */ // priority-donate 관련 변경
 	struct list donations;              /* donors list (multiple donation) */ //priority-donate 관련 변경
 	struct list_elem donation_elem;     /* multiple donation case */ //priority-donate 관련 변경
+
+	/* mlfqs */
 	int nice;                           /* nice value of thread */// mlfqs 관련 변경
 	int recent_cpu;                     /* recent_cpu which estimates how much CPU time earned recently */// mlfqs 관련 변경
 
@@ -115,7 +119,29 @@ struct thread {
 	/* Owned by thread.c. */
 	struct intr_frame tf;               /* Information for switching */
 	unsigned magic;                     /* Detects stack overflow. */
-	int64_t wakeup_tick;                /* Local ticks (minimum ticks required before awakened )  */ /* alarm-multiple 관련 변경 */
+
+	struct list child_list;             /* 자식 프로세스를 담아줄 리스트*/ //변경사항
+	struct list_elem child_elem;		/* child_list 에 담아줄 elem */ // 변경사항
+	
+	// struct semaphore wait_sema;
+	struct semaphore wait_sema;
+	int exit_status;                    /* system call : exit , wait */ //변경사항
+
+	struct intr_frame parent_if;           /* 유저 스택의 정보를 인터럽트 프레임 안에 넣어서, 커널 스택으로 넘겨주기 위함 */ //변경사항
+	struct semaphore fork_sema;            /* 자식 프로세스를 정상적으로 로드하기 위해, 부모 프로세스가 sema_down/up하게 되는 세마포어 */
+	struct semaphore free_sema;
+	
+
+	// 변경사항
+	/* file descriptor 관련 추가 */
+	struct file **fd_table;             /* File Descriptor Table (FD Table) */
+	int fd_idx;                          /* File Descriptor Index (FD Idx) */
+
+	// int stdin_count;
+	// int stdout_count;
+
+	// struct file *running;
+
 };
 
 /* If false (default), use round-robin scheduler.
@@ -174,6 +200,11 @@ void mlfqs_recent_cpu (struct thread *t);
 void mlfqs_load_avg (void);
 void mlfqs_increment (void);
 void mlfqs_recalc(void);
+
+
+/* FD(File Descriptor) 관련 변경 */
+#define FDT_PAGES 3
+#define FDCOUNT_LIMIT FDT_PAGES * (1<<9)
 
 
 #endif /* threads/thread.h */
