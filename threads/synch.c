@@ -189,6 +189,7 @@ lock_init (struct lock *lock) {
    we need to sleep. */
 
 /* priority-donate 관련 변경 */
+/* mlfqs 관련 변경 */
 void
 lock_acquire (struct lock *lock) {
 	struct thread *curr = thread_current();
@@ -234,6 +235,7 @@ lock_try_acquire (struct lock *lock) {
    handler. */
 
 /* priority-donate 관련 변경 */
+/* mlfqs 관련 변경 */
 void
 lock_release (struct lock *lock) {
 	ASSERT (lock != NULL);

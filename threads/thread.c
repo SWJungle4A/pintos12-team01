@@ -12,6 +12,7 @@
 #include "threads/vaddr.h"
 #include "intrinsic.h"
 #include "threads/fixed_point.h" // mlfqs 관련 변경
+#include "lib/stdio.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -25,11 +26,13 @@
    Do not modify this value. */
 #define THREAD_BASIC 0xd42df210
 
-/* Set reasonable depth limit (max level 8) */
+/* Set reasonable depth limit, default for mlfqs (max level 8) */
+#define MAXDEPTH 8
+
+/* Set reasonable default for mlfqs */
 #define NICE_DEFAULT 0
 #define RECENT_CPU_DEFAULT 0
-#define LOAD_AVG_DEFAULT 0
-#define MAXDEPTH 8
+#define LOAD_AVG_DEFAULT 0 
 
 // /* Set default for nice, recent_cpu, and load_avg */
 // #define NICE_DEFAULT 0
@@ -219,6 +222,22 @@ thread_create (const char *name, int priority,
 	init_thread (t, name, priority);
 	tid = t->tid = allocate_tid ();
 
+	/* Project 2 : system call 관련 추가 */
+	/* add new thread 't' into current thread's child_list */
+	struct thread *curr = thread_current();
+	list_push_back(&curr->child_list, &t->child_elem);
+	// File Descriptor Table 메모리 할당 // palloc이나 malloc?
+	t->fd_table = palloc_get_multiple(PAL_ZERO, FDT_PAGES);
+	if(t->fd_table == NULL)
+		return TID_ERROR;
+	t->fd_idx = 2; // 0 : stdin, 1: stdout
+
+	// /* Extra */
+	// t->fd_table[0] = 1; // dummy value? 
+	// t->fd_table[1] = 2; // dummy value?
+	// t->stdin_count = 1;
+	// t->stdout_count = 1;
+
 	/* Call the kernel_thread if it scheduled.
 	 * Note) rdi is 1st argument, and rsi is 2nd argument. */
 	t->tf.rip = (uintptr_t) kernel_thread;
@@ -236,7 +255,6 @@ thread_create (const char *name, int priority,
 	/* after the unblocked thread added to ready list, check if current thread is still the thread with highest priority. 
 	   (check if new inserted thread has higher priority than current one) */
 	check_curr_max_priority(); // alarm-priority, priority-fifo/preempt 관련 변경 
-	
 
 	return tid;
 }
@@ -674,6 +692,8 @@ init_thread (struct thread *t, const char *name, int priority) {
 	if(t!= idle_thread){
 		list_push_back (&all_list, &t->all_elem);
 	}
+	/* system call 관련 변경 */
+	t->exit_status = 0;
 }
 
 /* Chooses and returns the next thread to be scheduled.  Should

@@ -126,11 +126,12 @@ timer_print_stats (void) {
 }
 
 /* Timer interrupt handler. */
+/* 이후 프로젝트에서 에러시 timer_ticks() -> ticks 변경 ? */
 static void
 timer_interrupt (struct intr_frame *args UNUSED) {
 	ticks++;
 	thread_tick ();
-	if (thread_mlfqs){
+	if (thread_mlfqs){ // mlfqs 관련 변경
 		mlfqs_increment();
 		if (timer_ticks() % 4 == 0){
 			mlfqs_priority(thread_current());
