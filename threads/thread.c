@@ -689,6 +689,10 @@ init_thread (struct thread *t, const char *name, int priority) {
 	/* mlfqs 관련 변경 */
 	t->nice = NICE_DEFAULT;
 	t->recent_cpu = RECENT_CPU_DEFAULT;
+	list_init(&t->child_list);
+	sema_init(&t->wait_sema,0);
+	sema_init(&t->fork_sema,0);
+	sema_init(&t->free_sema,0);
 	if(t!= idle_thread){
 		list_push_back (&all_list, &t->all_elem);
 	}
